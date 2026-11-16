@@ -21,12 +21,12 @@ SignBridge addresses this challenge by exploring an automated gesture recognitio
 
 ## Technology Stack
 
- Component             | Technology 
-
- Programming Language  | Python 
- Computer Vision       | OpenCV 
- Hand Tracking         | MediaPipe 
- Input Processing      | Real-Time Webcam Feed 
+| Component | Technology |
+|---|---|
+| Programming Language | Python |
+| Computer Vision | OpenCV |
+| Hand Tracking | MediaPipe |
+| Input Processing | Real-Time Webcam Feed |
 
 ## System Workflow
 
