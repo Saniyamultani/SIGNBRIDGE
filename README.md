@@ -1,198 +1,64 @@
-# Signal — Sign Language Translator v5
+# SignBridge
+### Real-Time Sign Language Recognition Using Computer Vision
 
-A web-based bi-directional sign language translator.
+SignBridge is a computer vision-based application designed to recognize hand gestures and translate them into corresponding text representations. The system leverages real-time hand tracking and landmark detection to interpret gestures through visual input, exploring the application of computer vision in assistive communication technology.
 
-* **Sign → Speech** — Use your webcam to perform signs. The AI transcribes them, builds a sentence, applies grammar correction, and speaks it aloud.
-* **Text → Gesture** — Type any phrase. Matching sign-language videos play back sequentially.
+The project integrates Python, OpenCV, and MediaPipe to process live video streams, extract hand landmarks, and identify predefined gestures. It demonstrates how computer vision techniques can be applied to develop accessible solutions that help reduce communication barriers.
 
----
+## Overview
 
-## Setup (one-time)
+Sign language is an essential communication method for individuals with hearing or speech impairments. However, communication gaps often arise when others are unfamiliar with sign language.
 
-```bash
-# 1. Extract the project, cd into it
-cd signlang_redesign
+SignBridge addresses this challenge by exploring an automated gesture recognition approach that converts recognized hand signs into readable text, making visual communication more accessible.
 
-# 2. Copy the environment template
-cp .env.example .env
+## Key Capabilities
 
-# 3. Python backend
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # Mac / Linux
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
+- **Real-Time Video Processing:** Captures and processes live webcam input using OpenCV.
+- **Hand Tracking:** Detects and tracks hand movements using MediaPipe.
+- **Landmark Extraction:** Identifies key hand landmarks and coordinates for gesture analysis.
+- **Gesture Classification:** Recognizes predefined hand gestures based on extracted visual information.
+- **Text Translation:** Converts recognized gestures into their corresponding textual representations.
 
-# 4. Train the model (only if model/sign_model_holistic.pkl doesn't exist)
-python 1_collect_data.py       # Record samples for each sign
-python 2_train_model.py        # Train the Random Forest
+## Technology Stack
 
-# 5. Frontend dependencies
-cd frontend
-npm install
-cd ..
-```
+ Component             | Technology 
 
----
+ Programming Language  | Python 
+ Computer Vision       | OpenCV 
+ Hand Tracking         | MediaPipe 
+ Input Processing      | Real-Time Webcam Feed 
 
-## Running — Development (two terminals)
+## System Workflow
 
-**Terminal 1 — backend**
-```bash
-python run.py
-# API:  http://localhost:8000
-# Docs: http://localhost:8000/api/docs
-```
+The application follows a sequential computer vision pipeline:
 
-**Terminal 2 — frontend**
-```bash
-cd frontend
-npm run dev
-# Open http://localhost:5173
-```
+1. **Input Acquisition:** Captures real-time video frames through a webcam.
+2. **Preprocessing:** Processes video frames using OpenCV.
+3. **Hand Detection:** Identifies hand regions using MediaPipe.
+4. **Landmark Extraction:** Extracts hand landmarks representing finger positions and joint coordinates.
+5. **Gesture Recognition:** Processes the extracted hand information to identify predefined gestures.
+6. **Output Generation:** Displays the recognized gesture as text.
 
-## Running — Production (single command)
+## Application Scope
 
-```bash
-cd frontend && npm run build && cd ..
-python run.py                       # Serves the built SPA at :8000
-```
+SignBridge demonstrates the practical application of computer vision in accessibility-focused software development. It provides a foundation for gesture-based communication systems and highlights the potential of real-time visual recognition in assistive technologies.
 
----
+## Future Enhancements
 
-## Project structure
+- Expand gesture recognition to support a broader vocabulary.
+- Implement continuous gesture recognition and sentence formation.
+- Improve recognition accuracy across varying lighting conditions and hand orientations.
+- Introduce voice output for recognized gestures.
+- Explore multilingual text translation.
+- Develop a web-based or mobile interface for wider accessibility.
 
-```
-signlang_redesign/
-├── run.py                          Start the FastAPI server
-├── requirements.txt
-├── .env.example                    Copy to .env and tune
-├── .gitignore
-│
-├── backend/
-│   ├── app.py                      FastAPI factory + lifespan
-│   ├── settings.py                 Pydantic Settings
-│   ├── logger.py                   Structured logging
-│   ├── api/
-│   │   ├── sign_routes.py          /api/sign/*
-│   │   └── gesture_routes.py       /api/gesture/*
-│   └── services/
-│       ├── vision_service.py       MediaPipe loop + SignDetector
-│       ├── grammar_service.py      5-tier vocabulary-aware grammar
-│       └── gesture_service.py      Sign video queue + MJPEG stream
-│
-├── frontend/
-│   ├── index.html                  Premium fonts (Instrument Serif + Geist)
-│   ├── package.json
-│   └── src/
-│       ├── main.jsx · App.jsx
-│       ├── api/client.js           Centralised API client
-│       ├── styles/globals.css      Theme: navy + violet + amber
-│       ├── components/ui.jsx       Design system
-│       ├── hooks/
-│       │   ├── useSignDetector.js  5 Hz polling + TTS
-│       │   └── useGesture.js       Enqueue + library load
-│       └── pages/
-│           ├── LandingPage.jsx     Animated hero
-│           ├── SignToSpeechPage.jsx
-│           └── TextToGesturePage.jsx
-│
-├── model/                          .pkl files here
-├── library/                        .mp4 sign videos here
-└── data/                           Training CSVs
-```
+## Project Details
+
+**Project Name:** SignBridge  
+**Domain:** Computer Vision | Artificial Intelligence | Assistive Technology  
+**Language:** Python  
+**Core Libraries:** OpenCV, MediaPipe
 
 ---
 
-## Keyboard & button controls
-
-### Sign → Speech page
-| Control | Action |
-|---|---|
-| **Start camera** button | Open webcam + begin detection |
-| **Stop camera** button | Release the camera |
-| **Fix grammar & speak sentence** | Correct the raw sign sequence + speak full sentence |
-| **Undo** | Remove the last detected word |
-| **Clear** | Empty the sentence completely |
-
-### Text → Gesture page
-| Control | Action |
-|---|---|
-| Text input + **Send** | Queue sign videos for typed words |
-| Click any library word | Adds it to the input field |
-| **🗑** button | Empty the video queue |
-
----
-
-## The grammar engine (5 tiers)
-
-The critical piece that's been rewritten. When you sign
-`hello how you fine thank you`, the engine produces
-`"Hello, how are you? I'm fine, thank you."`
-
-Tier priority (first success wins):
-
-| Tier | Engine | Handles |
-|------|--------|---------|
-| 0 | OpenAI GPT | Anything — best quality (set `OPENAI_API_KEY` to enable) |
-| 1 | Exact phrase lookup | Known multi-word phrases from your vocabulary |
-| 2 | Regex pattern templates | Common sub-structures like "how you" → "how are you" |
-| 3 | Generic gloss rules | Pronoun + adjective/verb insertion (future-proofs) |
-| 4 | spaCy POS expansion | Out-of-vocab inputs |
-| 5 | language_tool polish | Punctuation + spelling cleanup on top |
-
-All input produces a sentence — no passthrough cases.
-
----
-
-## API endpoints
-
-### Sign → Speech
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/sign/start` | Start webcam + MediaPipe |
-| POST | `/api/sign/stop` | Release camera |
-| GET | `/api/sign/feed` | MJPEG stream |
-| GET | `/api/sign/state` | Current detection + sentence |
-| GET | `/api/sign/classes` | Known sign labels |
-| POST | `/api/sign/grammar` | Apply grammar correction |
-| POST | `/api/sign/clear` | Clear sentence |
-| POST | `/api/sign/undo` | Remove last word |
-
-### Text → Gesture
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/gesture/enqueue` | Queue text for playback |
-| GET | `/api/gesture/stream` | MJPEG stream of sign videos |
-| GET | `/api/gesture/status` | Queue state |
-| GET | `/api/gesture/library` | List available signs |
-| POST | `/api/gesture/clear` | Empty the queue |
-
-Interactive docs at `/api/docs`.
-
----
-
-## What changed vs v4
-
-- **Grammar engine rewritten** — was passing sentences through unchanged
-- Fixed circular import in `settings.py`
-- Python 3.9 compatibility throughout
-- MJPEG boundary now matches the Content-Type header exactly
-- SPA fallback no longer swallows API 404s
-- TTS dedupes via `new_word_id` instead of race-prone consume
-- Library files renamed (no more `thank-.mp4` kludge)
-- Brand-new UI: app aesthetic, animated landing, unified design system
-
----
-
-## Troubleshooting
-
-**"Cannot open webcam"** — another app is using it (Zoom/Teams/OBS). Close them or change `CAM_INDEX` in `.env`.
-
-**"Model files not found"** — run `1_collect_data.py` then `2_train_model.py`.
-
-**Grammar passes through unchanged** — this was a v4 bug, fixed in v5.
-
-**MJPEG stream frozen on first frame** — check console for `--frame` boundary mismatch. Was a v4 bug, fixed in v5.
-
-**spaCy model missing** — `python -m spacy download en_core_web_sm`. Without it, tiers 0-3 still work.
+*SignBridge explores the intersection of computer vision and assistive technology, demonstrating how real-time gesture recognition can contribute to more accessible communication.*
